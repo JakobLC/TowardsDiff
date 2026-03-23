@@ -1,0 +1,49 @@
+{
+    "analog_bits": {
+        "versions": {
+            "lap_sweep": {"lap_mode": "similar;random;different;none"},
+            "pred_loss_weights_sweep": {"predict": "x;v;eps", "loss_weights": "SNR;SNR_plus1;SNR_trunc;uniform", "decouple_loss_weights": false},
+            "pred_sweep": {"predict": "x;v;eps"},
+            "sigmoid_sweep": {"decouple_loss_weights": true, "loss_weights": "sigmoid_-6;sigmoid_-4;sigmoid_-2;sigmoid_0;sigmoid_2"},
+            "size_sweep": {"diff_channels": "2;4;6;8;10"}
+        },
+        "predict": "x",
+        "final_activation": "tanh_if_x",
+        "loss_weights": "sigmoid_-4",
+        "decouple_loss_weights": true,
+        "lap_mode": "similar",
+        "encoding_type": "analog_bits"
+    },
+    "unigs": {
+        "versions": {
+            "pred_sweep": {"predict": "x;v;eps"}
+        },
+        "predict": "x",
+        "final_activation": "none", 
+        "loss_weights": "sigmoid_-4",
+        "decouple_loss_weights": true,
+        "lap_mode": "random", 
+        "encoding_type": "RGB"
+    },
+    "onehot": {
+        "versions": {
+            "pred_sweep": {"predict": "x;v;eps", "final_activation": "none"},
+            "act_sweep": {"final_activation": "sigmoid;softmax", "predict": "x"},
+            "size_sweep": {"diff_channels": "2;4;6"}
+        },
+        "predict": "x",
+        "final_activation": "none",
+        "loss_weights": "sigmoid_-4",
+        "decouple_loss_weights": true,
+        "lap_mode": "random",
+        "encoding_type": "onehot"
+    },
+    "+speedy": {
+        "lr_warmup_steps": 100,
+        "save_interval": 500,
+        "gen_interval": 500,
+        "update_loss_plot_interval": 100,
+        "update_forward_pass_plot_interval": 100,
+        "log_vali_interval": 100
+    }
+}
