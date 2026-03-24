@@ -1,9 +1,7 @@
 {
     "gen_setup"                       : ["vali",          "name of the generation to use. TYPE: str. DEFAULT: 'vali'"],
-    "gen_version"                     : ["1.1.3",         "version of the generation to use. TYPE: str. DEFAULT: '1.1.3'"],
     "dynamic": {
         "gen_id"                      : ["[gen_setup]_*", "Unique id of the generation. Replaces [key] with corrspnd str. Replaces * with a unique identifer. TYPE: str. DEFAULT: '[gen_setup]_*'"],
-        "model_id"                    : ["",              "Id of the model of the ckpt used sampling. TYPE: str. DEFAULT: ''"],
         "name_match_str"              : ["",              "string to search for models when in pure sampling mode. TYPE: str. DEFAULT: ''"],
         "time"                        : ["",              "Time of the generation. TYPE: str. DEFAULT: ''"],
         "seed"                        : [-1,              "Seed to use for sampling. New random seed if <0. TYPE: int. DEFAULT: -1"],
@@ -13,18 +11,18 @@
         "origin"                      : ["",              "Variable for storing arguments which differed wrt. defaults and their tier/values. TYPE: str. DEFAULT: ''. "],
         "default_save_folder"         : ["",              "Default folder to save samples in, empty string defaults to [model_folder]/samples/. TYPE: str. DEFAULT: ''"],
         "datasets"                    : ["",              "Datasets to use for sampling. Only available in gen mode. TYPE: str. DEFAULT: ''"],
-        "num_samples"                 : [8,               "Number of samples (unique images) to produce votes for. TYPE: int. DEFAULT: 8"]
+        "num_samples"                 : [-1,              "Number of samples (unique images), -1 for all images in split. TYPE: int. DEFAULT: -1"]
     },
     "model options": {
         "clip_denoised"               : [true,            "Whether to clip denoised samples to [0,1] range. TYPE: bool. DEFAULT: true"],
-        "num_timesteps"               : [100,             "Number of timesteps to use for sampling. TYPE: int. DEFAULT: 100"],
-        "guidance_weight"             : [0.0,             "Weight of classifier free diffusion guidance, 0.0 for No guidance. TYPE: float. DEFAULT: 0.0"],
+        "num_timesteps"               : [8,             "Number of timesteps to use for sampling. TYPE: int. DEFAULT: 8"],
+        "guidance_weight"             : [1.0,             "Weight of classifier free diffusion guidance, 0.0 for No guidance. TYPE: float. DEFAULT: 1.0"],
         "guidance_kwargs"             : ["",              "Keyword arguments which are passed to the guidance forward pass, empty for none. TYPE: str. DEFAULT: ''"],
         "eval_batch_size"             : [0,               "Batch size for evaluation. 0 for same as train. TYPE: int. DEFAULT: 0"],
         "sampler_type"                : ["ddpm",          "Type of sampler to use. One of ['ddpm','ddim']. TYPE: str. DEFAULT: 'ddpm'"],
         "ema_idx"                     : [-1,              "EMA model idx to use for sampling. negative for no EMA (normal model). TYPE: float. DEFAULT: -1"],
         "split"                       : ["vali",          "Dataset split to use for sampling. One of ['train','vali','test']. TYPE: str. DEFAULT: 'vali'"],
-        "kwargs_mode"                 : ["train_image",   "How to get kwargs for the model forward passes. Either a str of comma-sep key names to use or one of ['train', 'train_image', 'only_image', 'all', 'none']. TYPE: str. DEFAULT: 'train'"],
+        "kwargs_mode"                 : ["train_image",   "How to get kwargs for the model forward passes. Either a str of comma-sep key names to use or one of ['train', 'train_image', 'only_image', 'all', 'none']. TYPE: str. DEFAULT: 'train_image'"],
         "aug_override"                : ["none",          "Whether to override the split setting and use/not use augmentations. TYPE: bool. DEFAULT: 'none'"]
     },
     "meta options": {
@@ -35,6 +33,6 @@
         "plotting_functions"          : ["grid,concat",   "Which plotting functions to use. Comma seperated string of zero or more of ['grid','inter','concat']. TYPE: str. DEFAULT: 'grid,concat'"]
     },
     "how much to sample": {
-        "num_votes"                   : [3,               "Number of votes (segmentation masks) to use per image when sampling. TYPE: int. DEFAULT: 5"]
+        "num_votes"                   : [1,               "Number of votes (segmentation masks) to use per image when sampling. TYPE: int. DEFAULT: 1"]
     }
 }

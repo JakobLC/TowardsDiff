@@ -389,7 +389,7 @@ def get_time(verbosity=4,sep="-"):
     return s
 
 def format_save_path(args):
-    save_path = str(Path("./saves/") / f"ver-{args.model_version}" / f"{get_time(1)}_{args.model_id}")
+    save_path = str(Path("./saves/") / f"{get_time(1)}_{args.model_id}")
     for k,v in args.origin.items():
         if v=="modified_args" and (k not in ["model_id","origin","model_name","save_path"]):
             save_path += f"_({k}={getattr(args,k)})"

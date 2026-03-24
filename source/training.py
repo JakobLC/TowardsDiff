@@ -1,3 +1,4 @@
+import argparse
 import copy
 import os
 from pathlib import Path
@@ -177,7 +178,7 @@ class DiffusionModelTrainer:
                             gen_id_matched = k
                             break
                 if gen_id_matched is not None:
-                    self.list_of_sample_opts[i] = load_existing_args(gen_id_matched,name_key="sample_opts",use_loaded_dynamic_args=False)
+                    self.list_of_sample_opts[i] = load_existing_args(gen_id_matched,name_key="sample_opts")
                     self.list_of_sample_opts[i].gen_id = gen_id_matched
             if self.args.mode=="cont":
                 event = f"event={self.args.mode}, step={self.step}, time={get_time()}"
@@ -723,3 +724,19 @@ class DiffusionModelTrainer:
             gen_setup_idx += 1
         del sampler
         
+def trainer_from_sample_opts(sample_opts,verbose=True):
+    ckpt_name = get_ckpt_name(sample_opts.name_match_str,return_multiple_matches=False)
+    if verbose: print("\nckpt_name:",ckpt_name)
+    if len(ckpt_name)==0:
+        raise ValueError(f"Could not find ckpt with name_match_str: {sample_opts.name_match_str}. "
+                         "Please check the name_match_str or the save_path.")
+    if verbose: print(str(Path(ckpt_name).parent / "args.json"))
+    assert (Path(ckpt_name).parent / "args.json").exists(), "args.json must exist when use_raw_args=False"
+    args_loaded = json.loads((Path(ckpt_name).parent / "args.json").read_text())
+    args = argparse.Namespace(**args_loaded[0])
+    if sample_opts.seed>=0:
+        args.seed = sample_opts.seed
+    args.mode = "gen"
+    args.ckpt_name = ckpt_name
+    trainer = DiffusionModelTrainer(args)
+    return trainer

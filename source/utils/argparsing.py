@@ -18,19 +18,14 @@ def get_ckpt_name(s,saves_folder="./saves/",return_multiple_matches=False):
     if len(s)==0:
         return s
     assert not s.find("./")>=0, "name_match_str is already relative to saves_folder. Do not use ./ in name_match_str."
-    # converts to format:  ver*/*/*.pt
+    # converts to format: */*.pt
     print("Trying to find ckpt name from s=",s)
     num_sep = s.count("/")
     if num_sep==0:
-        s = "ver-*/"+s+"/ckpt_*.pt"
-    elif num_sep==1:
-        if s.endswith(".pt"):
-            s = "ver-*/"+s
-        else:
-            s = s+"/ckpt_*.pt"        
-    elif num_sep==2:
+        s = s+"/ckpt_*.pt"
+    elif num_sep>=1:
         if not s.endswith(".pt"):
-            s = s+".pt"
+            s = s+"/ckpt_*.pt"
     if s.find("*") >= 0:
         matching_paths = list(Path(saves_folder).glob(bracket_glob_fix(s)))
         print(f"Found {len(matching_paths)} matches for s={s}.")
@@ -62,17 +57,12 @@ def list_wrap_type(t):
 
 def load_defaults(idx=0,
                   ordered_dict=False,
-                  filename="configs/args_default.json",
-                  version=None):
-    if version is not None:
-        assert idx==0, f"version={version} not supported with idx={idx}."
+                  filename="configs/args_default.json"):
     default_path = Path(__file__).parent.parent.parent/filename
     if ordered_dict:
         args_dicts = json.loads(default_path.read_text(), object_pairs_hook=OrderedDict)    
     else:
         args_dicts = json.loads(default_path.read_text())
-    if version is not None:
-        assert isinstance(version,str), f"version={version}."
     args_dict = {}
     for k,v in args_dicts.items():
         if isinstance(v,dict):
@@ -167,7 +157,6 @@ class TieredParser():
         assert name in ["args","sample_opts"], f"name={name} not supported."
         self.name_key = {"args": "model_name","sample_opts": "gen_setup"}[name]
         self.id_key = {"args": "model_id","sample_opts": "gen_id"}[name]
-        self.version_key = {"args": "model_version","sample_opts": "gen_version"}[name]
         self.filename_def   = "configs/"+name+"_default.json"
         self.filename_model = "configs/"+name+"_configs.json"
         self.filename_ids   = "configs/"+name+"_ids.json"
@@ -285,8 +274,7 @@ class TieredParser():
         tiers["name_plus"] = plus_name_args
         tiers["name_versions"] = ver_name_args
         tiers["name_root"] = root_name_args
-        version = self.construct_args(tiers)[self.version_key]
-        tiers["defaults_version"] = self.defaults_func(version=version)
+        tiers["defaults_version"] = self.defaults_func()
         #find version only after all other args are set
         args = self.construct_args(tiers)
         #map to the correct types
@@ -417,12 +405,7 @@ def get_closest_matches(k, list_of_things, n=3):
     return [a[0] for a in sorted(iou_per_key.items(), key=lambda x: x[1], reverse=True)[:n]]
 
 def load_existing_args(path_or_id,
-                  name_key="args",
-                  verify_keys=True,
-                  origin_replace_keys=["commandline","modified_args"],
-                  use_loaded_dynamic_args=True,
-                  behavior_on_mismatch="raise"):
-    assert behavior_on_mismatch in ["raise","theo","loaded"], f"behavior_on_mismatch={behavior_on_mismatch} must be one of ['raise','theo','loaded']"
+                  name_key="args"):
     tp = TieredParser(name_key)
     if str(path_or_id).endswith(".json"):
         args_loaded = load_json_to_dict_list(str(Path(path_or_id)))
@@ -433,49 +416,6 @@ def load_existing_args(path_or_id,
         id_dict = tp.load_and_format_id_dict()
         assert path_or_id in id_dict.keys(), f"path_or_id={path_or_id} not found in id_dict.keys(). Closest matches: {get_closest_matches(path_or_id,id_dict.keys(),n=3)}"
         args_loaded = id_dict[path_or_id]
-    if not "origin" in args_loaded.keys():
-        args_loaded["origin"] = {}
-    if not tp.version_key in args_loaded.keys():
-        args_loaded[tp.version_key] = "0.0.0"
-    modified_args = {tp.name_key: args_loaded[tp.name_key],
-                     tp.version_key: args_loaded[tp.version_key]}
-    
-    for k,v in args_loaded["origin"].items():
-        if v in origin_replace_keys:
-            if k not in ["gen_id","model_id"]:
-                modified_args[k] = args_loaded[k]
-    args_theoretical = tp.get_args(alt_parse_args=[],modified_args=modified_args)
-    theo_keys = args_theoretical.__dict__.keys()
-    load_keys = args_loaded.keys()
-    all_keys = set(theo_keys).union(set(load_keys))
-    for k in all_keys:
-        if k in tp.dynamic_args:
-            #dynamic args are allowed to be different
-            if (k in theo_keys) and (k in load_keys):
-                if use_loaded_dynamic_args:
-                    pass
-                else:
-                    args_loaded[k] = args_theoretical.__dict__[k]
-            if (k in theo_keys) and (k not in load_keys):
-                args_loaded[k] = args_theoretical.__dict__[k]
-        else:
-            if (k in theo_keys) and (k in load_keys):
-                if (args_theoretical.__dict__[k] != args_loaded[k]) and verify_keys:
-                    if behavior_on_mismatch=="raise":
-                        raise ValueError(f"args_theoretical.__dict__[{k}]={args_theoretical.__dict__[k]} != args_loaded[{k}]={args_loaded[k]}")
-                    elif behavior_on_mismatch=="theo":
-                        args_loaded[k] = args_theoretical.__dict__[k]
-                    elif behavior_on_mismatch=="loaded":
-                        pass
-                    else:
-                        raise ValueError(f"behavior_on_mismatch={behavior_on_mismatch} must be one of ['raise','theo','loaded']")
-            elif (k in theo_keys) and (k not in load_keys):
-                args_loaded[k] = args_theoretical.__dict__[k]
-            elif (k not in theo_keys) and (k in load_keys):
-                if verify_keys and (k not in tp.deprecated_args):
-                    raise ValueError(f"args_theoretical.__dict__ does not contain key {k} but args_loaded does.")
-            else:
-                raise ValueError(f"VERY UNEXPECTED BUG: key {k} not found in either args_theoretical.__dict__ or args_loaded.")
     return argparse.Namespace(**args_loaded)
 
 def overwrite_existing_args(args,delete_instead_of_overwrite=False):
